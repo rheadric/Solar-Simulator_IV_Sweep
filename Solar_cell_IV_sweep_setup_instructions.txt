@@ -1,0 +1,64 @@
+
+## Software setup for solar simulator
+
+Hardware: Newport LSH-7320 + Keithly 2401 + Labjack U3 + Windows Laptop computer
+
+1) Setup steps:
+
+Install the Anaconda distribution of Python: https://www.anaconda.com/products/individual 
+
+From Anaconda.Navigator, launch a cmd.exe terminal.
+
+From the terminal command line:
+
+pip install pyvisa
+pip install labjackpython
+
+It may not be necessary to install the KUSB-488B driver, since it is already installed on this computer.
+If you plan to use your own computer, then you can download it from here (Windows only):
+Here it is: https://www.tek.com/en/support/software/driver/4-0-0
+
+It may be helpful to have the Keysight Connection Expert installed:
+https://www.keysight.com/us/en/lib/software-detail/computer-software/io-libraries-suite-downloads-2175637.html
+
+
+2) Prepare for running a sweep:
+
+From Anaconda Navigator, launch the Jupyter server (Jupyter Notebook).
+
+Locate the notebook "Solar Simulator_IV_Sweep_with_Lamp_Control_V2.ipynb". There should be a copy on the flash 
+drive attached to the USB hub.
+
+
+Make a copy of the notebook and move it to the folder where you can keep a personal copy. Also put a copy of
+the K2401SS.py library in the folder with the notebook. It contains the python code to communicate with 
+the Keithley and LabJack units.
+
+From the Jupyter server, open the notebook.
+
+Turn the Keithley 2401 meter on and plug the KUSB488 into the USB hub. Check the blue buttons to make sure 
+that USB channel is on.
+
+Also plug the Labjack unit into the USB hub and the FIO4 output of the Labjack to the trigger of the LSH-7320.
+
+Plug the USB hub into this computer. Make sure each USB channel is on and the hardware devices mount. 
+
+(a) Run the LJControlPanel application and make sure the LabJack U3 device is recognized. Consult
+https://labjack.com/support/quickstart/u3  if you encounter problems.
+
+(b) Use the Keysight Conection Expert to check that the Keithley 2401 is connected. It should show up 
+as GPIB channel 24.
+
+
+3) Run the script
+
+
+Follow the instructions posted in the first markdown cell of the notebook. Once all the directory and file settings are 
+the way you want them, it may be convenient to use the "Restart and run all" from the "Kernel" menu.
+
+I have also written a "Monitor" script for the Timeseries multi-sweep scan. I expect to run timeseries scans for a period of 
+many hours to characterize degradation.
+
+Happy scanning!
+RLH 1/1/2022
+
