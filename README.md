@@ -1,4 +1,4 @@
-# Solar-Simulator_IV
+# Solar-Simulator_IV_Sweep
 
 Control Keithley 2401 + LabJack U3 + Newport LSH-7320 solar simulator via python
 
