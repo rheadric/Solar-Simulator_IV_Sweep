@@ -75,7 +75,7 @@ class K2401:
             print('  Resource alias: ', value.alias)
             i += 1
         # Open the device.
-        ADDRESS = 'GPIB0::24::INSTR'
+        ADDRESS = 'GPIB1::25::INSTR'
         self.ctrl =  rm.open_resource(ADDRESS)
         self.ctrl.write('*IDN?')
         print("\n", self.ctrl.read())
@@ -177,7 +177,7 @@ class K2401:
 
         # Light measurement
         U3.set_lamp_state("on", verbose=verbose)
-        time.sleep(5) # wait a few seconds for the lamp to stabilize
+        time.sleep(1) # wait a few seconds for the lamp to stabilize
         start_t = time.time()
         dfl = self.IVsweep(startv, stopv, stepv, rate=rate)
         stop_t = time.time()
@@ -237,7 +237,7 @@ class K2401:
     def calc_and_save_parameters(self, df,  path = "C:\\Users\Public", 
     samplename = "testymctest", cellnumber = "0", timenowstr = "", 
     datetodaystr = "", saveparameters = "yes", verbose = 1, timeseries = False,
-    base_t = 0):
+    base_t = 0, I_ph = 1.0):
         """
         Calculate PV parameters and save to a file. Append if the file already exists.
         Note: AM1.5 has 80.5 mW/cm2 between 400-1100 nm. LSH-7320 calibration is 100 mW/cm2 at 1 sun.
@@ -254,18 +254,32 @@ class K2401:
         #
         fj = interp1d(v,j,kind='cubic')
         j_sc = -1000.0*fj(0.0)
-        fv = interp1d(j,v,kind='cubic')
-        v_oc = fv(0.0)
-        pmax = 1000*np.max(-v*j)
-        ff = pmax/(v_oc*j_sc)
-        pce = 0.805*pmax/100.0 # AM1.5 has 80.5 mW/cm2 between 400-1100 nm. LSH-7320 calibration is 100 mW/cm2 at 1 sun.
         vstep = 0.01
         r_sh = vstep/(fj(vstep)-fj(0.0))
-        jstep = 1e-6
-        r_ser = (fv(jstep)-fv(0.0))/jstep
-        #   ``
+        try:
+            fv = interp1d(j,v,kind='cubic')
+            v_oc = fv(0.0)
+            jstep = 1e-6
+            r_ser = (fv(jstep)-fv(0.0))/jstep
+            pwr = 1000*(-v*j)
+            pmax = np.max(pwr)
+            pmaxpos = np.where(pwr == pmax)
+            mpp = v[pmaxpos[0][0]] 
+            ff = pmax/(v_oc*j_sc)
+            pce = 0.805*pmax/(100.0*I_ph) # AM1.5 has 80.5 mW/cm2 between 400-1100 nm. LSH-7320 calibration is 100 mW/cm2 at 1 sun.
+        except:
+            print("Warning: interp1d error while calculating v_oc")
+            v_oc = 0.0 # not the correct value. This is just to handle the error.
+            r_ser = 0.0
+            pmax = 0.0
+            mpp = 0.0
+            ff = 0.0
+            pce = 0.0
+        # 
         if (verbose == 1):
+            print("I_ph = {:5.3f} V".format(I_ph))
             print("V_oc = {:5.3f} V".format(v_oc))
+            print("mpp = {:5.3f} V".format(mpp))
             print("J_sc = {:5.3f} mA".format(j_sc))
             print("R_sh = {:5.1f} Ω-cm^2".format(r_sh))
             print("R_ser = {:5.2f} Ω-cm^2".format(r_ser))
@@ -281,7 +295,9 @@ class K2401:
             filename = path + "\\" + "timeseries_parameters_" + datetodaystr
             data = {"Elapsed Time": (time.time() - base_t)/60.0,
                     "Sample_Cell#":  sample_cellnum_time_str,
+                    "I_ph(suns)": [I_ph],
                     "V_oc(V)":  [v_oc],
+                    "mpp(V)":  [mpp],
                     "J_sc(mA)":  [j_sc],
                     "R_sh":  [r_sh],
                     "R_ser": [r_ser],
@@ -290,7 +306,9 @@ class K2401:
         else:
             filename = path + "\\" + "parameters_" + datetodaystr
             data = {"Sample_Cell#":  sample_cellnum_time_str,
+                    "I_ph(suns)": [I_ph],
                     "V_oc(V)":  [v_oc],
+                    "mpp(V)":  [mpp],
                     "J_sc(mA)":  [j_sc],
                     "R_sh":  [r_sh],
                     "R_ser": [r_ser],
